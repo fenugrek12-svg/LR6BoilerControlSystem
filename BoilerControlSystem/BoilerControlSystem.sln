@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36408.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoilerControlSystem", "BoilerControlSystem\BoilerControlSystem.csproj", "{3E0CFBF1-27B9-452E-B77E-7756253D8DC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoilerControlSystemLR5.Core", "..\..\LR5\Boiler\BoilerControlSystemLR5\BoilerControlSystemLR5.Core.csproj", "{95E249F9-4B59-4C3A-9015-02F8776F2237}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3E0CFBF1-27B9-452E-B77E-7756253D8DC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E0CFBF1-27B9-452E-B77E-7756253D8DC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E0CFBF1-27B9-452E-B77E-7756253D8DC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E0CFBF1-27B9-452E-B77E-7756253D8DC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95E249F9-4B59-4C3A-9015-02F8776F2237}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95E249F9-4B59-4C3A-9015-02F8776F2237}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95E249F9-4B59-4C3A-9015-02F8776F2237}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95E249F9-4B59-4C3A-9015-02F8776F2237}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {86C5B852-1588-42A0-B65F-AC9C605563B4}
+	EndGlobalSection
+EndGlobal
