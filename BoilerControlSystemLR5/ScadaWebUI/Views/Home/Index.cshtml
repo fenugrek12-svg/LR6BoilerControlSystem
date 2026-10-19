@@ -1,0 +1,145 @@
+﻿@{
+    ViewData["Title"] = "SCADA - Паровий котел (Варіант 14)";
+
+    // Серверне формування календаря поточного місяця (ЛР7)
+    var uk = new System.Globalization.CultureInfo("uk-UA");
+    DateTime today = DateTime.Today;
+    DateTime first = new DateTime(today.Year, today.Month, 1);
+    int offset = ((int)first.DayOfWeek + 6) % 7; // Початок тижня — понеділок
+    int days = DateTime.DaysInMonth(today.Year, today.Month);
+}
+
+<div class="container-fluid mt-2">
+    <div class="text-center mb-3">
+        <h2 class="mb-1 fw-bold">Мнемосхема технологічного процесу: Паровий котел</h2>
+        <span class="badge bg-primary px-3 py-2 fs-6">Система SCADA (Моніторинг через MQTT)</span>
+    </div>
+
+    <!-- Загальний контейнер scada-page: схема та календар розташовані поруч -->
+    <div class="scada-page">
+        
+        <!-- 1. Мнемосхема котла -->
+        <div class="position-relative border shadow-sm rounded-4" 
+             style="width: 820px; height: 500px; background: linear-gradient(180deg, #f0f4f8 0%, #d9e2ec 100%); flex-shrink: 0;">
+
+            <!-- Барабан / Корпус котла -->
+            <div style="position: absolute; left: 240px; top: 110px; width: 340px; height: 300px; 
+                        background: #486581; border: 4px solid #102a43; border-radius: 40px; 
+                        display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.3);">
+                <h4 class="text-white fw-bold mb-1">ПАРОВИЙ КОТЕЛ</h4>
+                <span class="text-light small">Boiler Unit #1</span>
+                
+                <div style="width: 220px; height: 110px; background: #102a43; border-radius: 8px; margin-top: 15px; border: 2px solid #829ab1; display: flex; align-items: center; justify-content: center;">
+                    <span class="text-info font-monospace small">ВОДЯНИЙ ОБ'ЄМ / ПАРА</span>
+                </div>
+            </div>
+
+            <!-- Верхня труба відбору пари -->
+            <div style="position: absolute; left: 385px; top: 30px; width: 50px; height: 80px; background: #829ab1; border: 4px solid #102a43;"></div>
+
+            <!-- Датчик 1: Тиск у барабані -->
+            <div class="card p-2 shadow-sm border-2" style="position: absolute; left: 540px; top: 35px; width: 230px; border-color: #0284c7;">
+                <div class="fw-bold text-secondary small">Тиск у котлі (Pressure)</div>
+                <div class="fs-4 text-primary font-monospace fw-bold" id="sensor-pressure">--.- бар</div>
+                <div class="text-muted" style="font-size: 10px;" id="topic-pressure">boiler/1/sensors/drum/pressure</div>
+            </div>
+
+            <!-- Датчик 2: Температура води -->
+            <div class="card p-2 shadow-sm border-2" style="position: absolute; left: 20px; top: 180px; width: 220px; border-color: #dc2626;">
+                <div class="fw-bold text-secondary small">Температура (Temp)</div>
+                <div class="fs-4 text-danger font-monospace fw-bold" id="sensor-temp">--.- °C</div>
+                <div class="text-muted" style="font-size: 10px;" id="topic-temp">boiler/1/sensors/water/temperature</div>
+            </div>
+
+            <!-- Датчик 3: Рівень води в барабані -->
+            <div class="card p-2 shadow-sm border-2" style="position: absolute; left: 600px; top: 230px; width: 200px; border-color: #16a34a;">
+                <div class="fw-bold text-secondary small">Рівень води (Water Level)</div>
+                <div class="fs-4 text-success font-monospace fw-bold" id="sensor-level">--.- %</div>
+                <div class="text-muted" style="font-size: 10px;" id="topic-level">boiler/1/sensors/drum/level</div>
+            </div>
+
+            <!-- Рядок стану зв'язку з брокером -->
+            <div style="position: absolute; left: 20px; bottom: 15px; text-align: left; background: rgba(255,255,255,0.9); padding: 5px 12px; border-radius: 6px; font-size: 11px; border: 1px solid #cbd5e1;">
+                <span class="fw-bold">Останній стан MQTT: </span>
+                <span id="all-topics" class="font-monospace text-muted">немає даних</span>
+            </div>
+        </div>
+
+        <!-- 2. Календар поточного місяця (ЛР7) -->
+        <div>
+            <table class="cal">
+                <caption>@uk.TextInfo.ToTitleCase(today.ToString("MMMM yyyy", uk))</caption>
+                <thead>
+                    <tr>
+                        <th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Нд</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        @for (int i = 0; i < offset; i++)
+                        {
+                            <td></td>
+                        }
+                        @for (int d = 1; d <= days; d++)
+                        {
+                            bool isWeekend = (offset + d - 1) % 7 >= 5;
+                            string css = d == today.Day ? "today" : (isWeekend ? "weekend" : "");
+                            <td class="@css">@d</td>
+
+                            if ((offset + d) % 7 == 0 && d < days)
+                            {
+                                @:</tr><tr>
+                            }
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function fetchSensorUpdates() {
+            try {
+                const response = await fetch('/Home/GetSensorData');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    const keys = Object.keys(data);
+                    if (keys.length > 0) {
+                        const debugEl = document.getElementById('all-topics');
+                        if (debugEl) debugEl.innerText = 'Отримано параметрів: ' + keys.length;
+                    }
+
+                    for (const topic in data) {
+                        const val = Number(data[topic]);
+                        const t = topic.toLowerCase();
+
+                        // 1. Тиск
+                        if (t.includes('pressure') || t.includes('тиск')) {
+                            const el = document.getElementById('sensor-pressure');
+                            if (el) el.innerText = val.toFixed(2) + ' бар';
+                        }
+                        // 2. Температура
+                        else if (t.includes('temperature') || t.includes('temp') || t.includes('темп')) {
+                            const el = document.getElementById('sensor-temp');
+                            if (el) el.innerText = val.toFixed(1) + ' °C';
+                        }
+                        // 3. Рівень
+                        else if (t.includes('level') || t.includes('рівен')) {
+                            const el = document.getElementById('sensor-level');
+                            if (el) el.innerText = val.toFixed(1) + ' %';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Помилка оновлення даних:', err);
+            }
+        }
+
+        setInterval(fetchSensorUpdates, 1000);
+        fetchSensorUpdates();
+    </script>
+}

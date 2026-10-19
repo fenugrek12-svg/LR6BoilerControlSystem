@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "..\\..\\LR3\\BoilerControlSystem\\BoilerControlSystem\\BoilerControlSystem.csproj",
+        "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "ScadaWebUI\\ScadaWebUI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
