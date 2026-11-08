@@ -1,15 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using ScadaWebUI.Data;
 using ScadaWebUI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем поддержку MVC (контроллеры и представления)
-builder.Services.AddControllersWithViews();
+// Додаємо DbContext для EF Core (ЛР8)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// 1. Регистрируем хранилище данных датчиков как Singleton (один экземпляр на всё приложение)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Реєстрація сервісів з попередніх ЛР
 builder.Services.AddSingleton<ISensorDataService, SensorDataService>();
-
-// 2. Регистрируем фоновый сервис MQTT для постоянного приёма сообщений
 builder.Services.AddHostedService<MqttBackgroundService>();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -23,7 +29,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(

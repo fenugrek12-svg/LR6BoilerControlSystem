@@ -1,0 +1,31 @@
+﻿@model List<ScadaWebUI.Data.SensorSample>
+@{
+    ViewData["Title"] = "Історія показань";
+}
+
+<div class="container mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Історія показань датчиків</h2>
+        <a asp-action="Index" class="btn btn-outline-primary">← До мнемосхеми</a>
+    </div>
+
+    <table class="table table-striped table-hover border shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Час (Local)</th>
+                <th>Топік MQTT</th>
+                <th>Значення</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td class="font-monospace">@s.MeasuredAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    <td class="font-monospace text-primary">@s.Topic</td>
+                    <td class="fw-bold">@s.Value @s.Unit</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

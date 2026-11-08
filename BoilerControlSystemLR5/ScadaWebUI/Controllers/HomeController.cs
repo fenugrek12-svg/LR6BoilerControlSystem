@@ -1,29 +1,84 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using ScadaWebUI.Data;
+using ScadaWebUI.Models;
 using ScadaWebUI.Services;
 
 namespace ScadaWebUI.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly ILogger<HomeController> _logger;
         private readonly ISensorDataService _sensorDataService;
+        private readonly ApplicationDbContext _db;
 
-        public HomeController(ISensorDataService sensorDataService)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ISensorDataService sensorDataService,
+            ApplicationDbContext db)
         {
+            _logger = logger;
             _sensorDataService = sensorDataService;
+            _db = db;
         }
 
-        // Открытие страницы с мнемосхемой
         public IActionResult Index()
         {
             return View();
         }
 
-        // Метод, который опрашивает JavaScript для получения актуальных показаний
         [HttpGet]
         public IActionResult GetSensorData()
         {
             var data = _sensorDataService.GetAllValues();
             return Json(data);
+        }
+
+        // ЛР8: Збереження поточних показань у БД
+        [HttpPost]
+        public IActionResult Save()
+        {
+            var data = _sensorDataService.GetAllValues();
+
+            foreach (var kvp in data)
+            {
+                string topic = kvp.Key;
+                double val = kvp.Value;
+                string unit = topic.Contains("pressure") ? "bar" : topic.Contains("temp") ? "°C" : "%";
+
+                _db.SensorSamples.Add(new SensorSample
+                {
+                    Topic = topic,
+                    Value = val,
+                    Unit = unit,
+                    MeasuredAtUtc = DateTimeOffset.UtcNow
+                });
+            }
+
+            _db.SaveChanges();
+            return RedirectToAction("History");
+        }
+
+        // ЛР8: Відображення історії (останні 50 записів)
+        public IActionResult History()
+        {
+            var samples = _db.SensorSamples
+                .OrderByDescending(s => s.Id)
+                .Take(50)
+                .ToList();
+
+            return View(samples);
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
