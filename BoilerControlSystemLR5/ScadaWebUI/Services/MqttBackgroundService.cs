@@ -1,93 +1,59 @@
-﻿using System.Text;
+﻿using MQTTnet;
+using ScadaWebUI.Services;
+using System.Text;
 using System.Text.Json;
-using MQTTnet;
 
-namespace ScadaWebUI.Services
+namespace ScadaWebUI.Services;
+
+public class MqttBackgroundService : BackgroundService
 {
-    public class MqttBackgroundService : BackgroundService
+    private readonly IMqttClient _mqttClient;
+    private readonly MqttClientOptions _options;
+    private readonly ISensorDataService _sensorDataService;
+
+    public MqttBackgroundService(ISensorDataService sensorDataService)
     {
-        private readonly ISensorDataService _sensorDataService;
-        private readonly ILogger<MqttBackgroundService> _logger;
-        private IMqttClient? _mqttClient;
+        _sensorDataService = sensorDataService;
+        var factory = new MqttClientFactory();
+        _mqttClient = factory.CreateMqttClient();
 
-        public MqttBackgroundService(ISensorDataService sensorDataService, ILogger<MqttBackgroundService> logger)
+        _options = new MqttClientOptionsBuilder()
+            .WithTcpServer("localhost", 1883)
+            .Build();
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _mqttClient.ApplicationMessageReceivedAsync += e =>
         {
-            _sensorDataService = sensorDataService;
-            _logger = logger;
-        }
+            var topic = e.ApplicationMessage.Topic;
+            var payload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            var factory = new MqttClientFactory();
-            _mqttClient = factory.CreateMqttClient();
-
-            var options = new MqttClientOptionsBuilder()
-                .WithTcpServer("127.0.0.1", 1883)
-                .WithClientId($"ScadaWebUI_{Guid.NewGuid()}")
-                .Build();
-
-            _mqttClient.ApplicationMessageReceivedAsync += e =>
+            try
             {
-                var topic = e.ApplicationMessage.Topic;
-
-                // Для версії MQTTnet 5.x використовуємо e.ApplicationMessage.Payload
-                var payloadBytes = e.ApplicationMessage.Payload;
-                var payload = payloadBytes.Length > 0 ? Encoding.UTF8.GetString(payloadBytes) : string.Empty;
-
-                if (!string.IsNullOrEmpty(payload))
+                // Парсим JSON {"value": 51.3, ...}
+                using var doc = JsonDocument.Parse(payload);
+                if (doc.RootElement.TryGetProperty("value", out var valElement))
                 {
-                    try
-                    {
-                        // Парсинг JSON {"value": 12.34, "unit": "..."}
-                        using var doc = JsonDocument.Parse(payload);
-                        if (doc.RootElement.TryGetProperty("value", out var valProp))
-                        {
-                            double val = valProp.GetDouble();
-                            _sensorDataService.UpdateValue(topic, val);
-                        }
-                    }
-                    catch
-                    {
-                        // Якщо передано просте числове значення
-                        if (double.TryParse(payload, System.Globalization.CultureInfo.InvariantCulture, out double val))
-                        {
-                            _sensorDataService.UpdateValue(topic, val);
-                        }
-                    }
+                    double val = valElement.GetDouble();
+                    _sensorDataService.UpdateValue(topic, val);
                 }
-
-                return Task.CompletedTask;
-            };
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    if (!_mqttClient.IsConnected)
-                    {
-                        await _mqttClient.ConnectAsync(options, stoppingToken);
-                        _logger.LogInformation("SCADA підключилася до MQTT-брокера!");
-
-                        // Підписка на топіки датчиків котла
-                        await _mqttClient.SubscribeAsync("boiler/1/sensors/#", cancellationToken: stoppingToken);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Помилка зв'язку з MQTT: {ex.Message}");
-                }
-
-                await Task.Delay(4000, stoppingToken);
             }
-        }
-
-        public override async Task StopAsync(CancellationToken cancellationToken)
-        {
-            if (_mqttClient != null && _mqttClient.IsConnected)
+            catch
             {
-                await _mqttClient.DisconnectAsync(cancellationToken: cancellationToken);
+                // Если пришло обычное число без JSON
+                if (double.TryParse(payload, out double val))
+                {
+                    _sensorDataService.UpdateValue(topic, val);
+                }
             }
-            await base.StopAsync(cancellationToken);
-        }
+
+            return Task.CompletedTask;
+        };
+
+        await _mqttClient.ConnectAsync(_options, stoppingToken);
+        await _mqttClient.SubscribeAsync("boiler/#", cancellationToken: stoppingToken);
+
+        await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 }

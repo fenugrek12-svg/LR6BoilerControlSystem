@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ScadaWebUI.Data;
 using ScadaWebUI.Models;
 using ScadaWebUI.Services;
@@ -34,9 +35,9 @@ namespace ScadaWebUI.Controllers
             return Json(data);
         }
 
-        // ЛР8: Збереження поточних показань у БД
+        // ЛР9: Асинхронне збереження
         [HttpPost]
-        public IActionResult Save()
+        public async Task<IActionResult> Save()
         {
             var data = _sensorDataService.GetAllValues();
 
@@ -55,17 +56,17 @@ namespace ScadaWebUI.Controllers
                 });
             }
 
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             return RedirectToAction("History");
         }
 
-        // ЛР8: Відображення історії (останні 50 записів)
-        public IActionResult History()
+        // ЛР9: Асинхронне читання з БД
+        public async Task<IActionResult> History()
         {
-            var samples = _db.SensorSamples
+            var samples = await _db.SensorSamples
                 .OrderByDescending(s => s.Id)
                 .Take(50)
-                .ToList();
+                .ToListAsync();
 
             return View(samples);
         }
