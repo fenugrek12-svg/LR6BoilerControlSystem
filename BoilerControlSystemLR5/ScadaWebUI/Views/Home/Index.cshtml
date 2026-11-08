@@ -91,7 +91,7 @@
                 </tbody>
             </table>
 
-            <!-- КНОПКА ЗБЕРЕЖЕННЯ (ЛР8) -->
+            <!-- Форма збереження з автоматичним токеном CSRF -->
             <form method="post" asp-action="Save" class="mt-3 text-center">
                 <button type="submit" class="btn btn-success w-100 shadow-sm fw-bold">Зберегти показання в БД</button>
             </form>
@@ -115,6 +115,13 @@
         async function fetchSensorUpdates() {
             try {
                 const response = await fetch('/Home/GetSensorData');
+                
+                // ЛР9 (Завдання 6): Якщо сесію втрачено і сервер перенаправляє на Login
+                if (response.redirected) {
+                    window.location.reload();
+                    return;
+                }
+
                 if (response.ok) {
                     const data = await response.json();
                     

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ScadaWebUI</title>
+    <title>@ViewData["Title"] - SCADA System</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ScadaWebUI.styles.css" asp-append-version="true" />
@@ -20,54 +20,42 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Мнемосхема</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Конфіденційність</a>
                         </li>
+
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Мнемосхема</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="History">Історія</a>
+                            </li>
+                        }
                     </ul>
 
-                    <!-- Годинник і дата у шапці сайту -->
-                    <div class="scada-clock">
-                        <b id="clock-time">@DateTime.Now.ToString("HH:mm:ss")</b>
-                        <small id="clock-date">@DateTime.Now.ToString("dddd, d MMMM yyyy 'р.'", new System.Globalization.CultureInfo("uk-UA"))</small>
-                    </div>
+                    <!-- Часткове представлення для кнопок Входу/Виходу/Реєстрації -->
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Розширена область вмісту (container-fluid) -->
     <div class="container-fluid">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container-fluid text-center">
-            &copy; 2026 - SCADA Парового Котла - Лабораторна робота 7
+    <footer class="border-top footer text-muted text-center py-3">
+        <div class="container">
+            &copy; 2026 - SCADA Парового Котла - <a asp-area="" asp-controller="Home" asp-action="Privacy">Конфіденційність</a>
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <!-- Щосекундне оновлення годинника без перезавантаження сторінки -->
-    <script>
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock-time').textContent = now.toLocaleTimeString('uk-UA');
-            document.getElementById('clock-date').textContent = now.toLocaleDateString('uk-UA', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        }, 1000);
-    </script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

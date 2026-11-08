@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScadaWebUI.Data;
@@ -7,6 +8,7 @@ using ScadaWebUI.Services;
 
 namespace ScadaWebUI.Controllers
 {
+    [Authorize] // Захищаємо весь контролер
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -35,7 +37,7 @@ namespace ScadaWebUI.Controllers
             return Json(data);
         }
 
-        // ЛР9: Асинхронне збереження
+        // Захист від CSRF та застосування іменованої політики
         [HttpPost]
         public async Task<IActionResult> Save()
         {
@@ -60,7 +62,6 @@ namespace ScadaWebUI.Controllers
             return RedirectToAction("History");
         }
 
-        // ЛР9: Асинхронне читання з БД
         public async Task<IActionResult> History()
         {
             var samples = await _db.SensorSamples
@@ -71,11 +72,13 @@ namespace ScadaWebUI.Controllers
             return View(samples);
         }
 
+        [AllowAnonymous] // Дозволяємо анонімний доступ
         public IActionResult Privacy()
         {
             return View();
         }
 
+        [AllowAnonymous] // Дозволяємо анонімний доступ
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
