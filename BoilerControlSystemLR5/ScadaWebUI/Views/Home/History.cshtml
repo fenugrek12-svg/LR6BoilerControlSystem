@@ -15,6 +15,7 @@
                 <th>Час (Local)</th>
                 <th>Топік MQTT</th>
                 <th>Значення</th>
+                <th>Хто зберіг</th>
             </tr>
         </thead>
         <tbody>
@@ -24,6 +25,7 @@
                     <td class="font-monospace">@s.MeasuredAtUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
                     <td class="font-monospace text-primary">@s.Topic</td>
                     <td class="fw-bold">@s.Value @s.Unit</td>
+                    <td>@s.SavedBy</td>
                 </tr>
             }
         </tbody>

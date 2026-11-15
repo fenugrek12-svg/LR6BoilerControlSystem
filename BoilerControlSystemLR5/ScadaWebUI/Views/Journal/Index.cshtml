@@ -1,0 +1,30 @@
+﻿@model List<ScadaWebUI.Data.LoginEvent>
+@{
+    ViewData["Title"] = "Журнал входів";
+}
+
+<div class="container mt-3">
+    <h2 class="mb-3">Журнал входів операторів</h2>
+
+    <table class="table table-sm table-bordered shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Час (Local)</th>
+                <th>Користувач</th>
+                <th>Результат</th>
+                <th>IP-адреса</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr class="@(e.Succeeded ? "" : "table-danger")">
+                    <td class="font-monospace">@e.TimeUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    <td>@e.UserName</td>
+                    <td class="fw-bold">@e.Result</td>
+                    <td class="font-monospace">@e.IpAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

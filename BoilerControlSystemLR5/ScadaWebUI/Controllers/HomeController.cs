@@ -8,7 +8,7 @@ using ScadaWebUI.Services;
 
 namespace ScadaWebUI.Controllers
 {
-    [Authorize] // Захищаємо весь контролер
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -37,10 +37,12 @@ namespace ScadaWebUI.Controllers
             return Json(data);
         }
 
-        // Захист від CSRF та застосування іменованої політики
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "CanReadSavings")]
         public async Task<IActionResult> Save()
         {
+            string userName = User.Identity?.Name ?? "unknown";
             var data = _sensorDataService.GetAllValues();
 
             foreach (var kvp in data)
@@ -54,7 +56,8 @@ namespace ScadaWebUI.Controllers
                     Topic = topic,
                     Value = val,
                     Unit = unit,
-                    MeasuredAtUtc = DateTimeOffset.UtcNow
+                    MeasuredAtUtc = DateTimeOffset.UtcNow,
+                    SavedBy = userName
                 });
             }
 
@@ -72,13 +75,13 @@ namespace ScadaWebUI.Controllers
             return View(samples);
         }
 
-        [AllowAnonymous] // Дозволяємо анонімний доступ
+        [AllowAnonymous]
         public IActionResult Privacy()
         {
             return View();
         }
 
-        [AllowAnonymous] // Дозволяємо анонімний доступ
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

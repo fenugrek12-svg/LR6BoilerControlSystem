@@ -11,4 +11,5 @@ public class ApplicationDbContext : IdentityDbContext
     }
 
     public DbSet<SensorSample> SensorSamples => Set<SensorSample>();
+    public DbSet<LoginEvent> LoginEvents => Set<LoginEvent>();
 }

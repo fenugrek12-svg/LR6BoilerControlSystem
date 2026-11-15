@@ -224,6 +224,37 @@ namespace ScadaWebUI.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ScadaWebUI.Data.LoginEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("TimeUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LoginEvents");
+                });
+
             modelBuilder.Entity("ScadaWebUI.Data.SensorSample", b =>
                 {
                     b.Property<int>("Id")
@@ -234,6 +265,10 @@ namespace ScadaWebUI.Migrations
 
                     b.Property<DateTimeOffset>("MeasuredAtUtc")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SavedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Topic")
                         .IsRequired()
