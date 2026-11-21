@@ -3,36 +3,40 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ScadaWebUI.Data;
+using ScadaWebUI.Security;
 using ScadaWebUI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. �� �� EF Core
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 2. ������������ Identity: ����� �� ���������� (��10)
+// Identity з підтримкою ролей
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
 
-    // ������ �� ������
     options.Password.RequiredLength = 8;
     options.Password.RequireDigit = true;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
 
-    // ����������: 3 ������ ������ -> 5 ������
     options.Lockout.MaxFailedAccessAttempts = 3;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.AllowedForNewUsers = true;
 })
+.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 3. ������������ Cookie ������ (��10)
+// Перевірка SecurityStamp щохвилини для швидкого застосування зміни ролей
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.FromMinutes(1);
+});
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "BoilerScada.Auth";
@@ -43,11 +47,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
-// 4. ������ SCADA
 builder.Services.AddSingleton<ISensorDataService, SensorDataService>();
 builder.Services.AddHostedService<MqttBackgroundService>();
 
-// 5. ����������, Razor Pages �� ������� �����������
 builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<RazorPagesOptions>(options =>
@@ -56,6 +58,7 @@ builder.Services.Configure<RazorPagesOptions>(options =>
     options.Conventions.AllowAnonymousToAreaPage("Identity", "/Account/Register");
 });
 
+// Політики авторизації на основі матриці прав доступу
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -64,11 +67,22 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("CanReadSavings", policy =>
     {
-        policy.RequireAuthenticatedUser();
+        policy.RequireRole(AppRoles.Operator, AppRoles.Technician, AppRoles.Admin);
+    });
+
+    options.AddPolicy("CanConfigure", policy =>
+    {
+        policy.RequireRole(AppRoles.Technician, AppRoles.Admin);
     });
 });
 
 var app = builder.Build();
+
+// Створення ролей та першого адміністратора
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
+}
 
 if (!app.Environment.IsDevelopment())
 {

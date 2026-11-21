@@ -2,11 +2,23 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="navbar-nav align-items-center">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
+        <li class="nav-item d-flex align-items-center me-2">
             <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Вітаємо, @User.Identity?.Name!</a>
+            @if (User.IsInRole(AppRoles.Admin))
+            {
+                <span class="badge bg-danger">Admin</span>
+            }
+            @if (User.IsInRole(AppRoles.Technician))
+            {
+                <span class="badge bg-warning text-dark">Technician</span>
+            }
+            @if (User.IsInRole(AppRoles.Operator))
+            {
+                <span class="badge bg-success">Operator</span>
+            }
         </li>
         <li class="nav-item">
             <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">

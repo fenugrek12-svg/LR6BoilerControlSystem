@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScadaWebUI.Data;
+using ScadaWebUI.Security;
 
 namespace ScadaWebUI.Controllers;
 
-[Authorize]
+[Authorize(Roles = AppRoles.Admin)]
 public class JournalController : Controller
 {
     private readonly ApplicationDbContext _db;

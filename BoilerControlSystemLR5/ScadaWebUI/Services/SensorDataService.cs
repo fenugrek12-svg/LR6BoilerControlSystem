@@ -1,26 +1,38 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ScadaWebUI.Services
+namespace ScadaWebUI.Services;
+
+public class SensorDataService : ISensorDataService
 {
-    public interface ISensorDataService
+    private readonly ConcurrentDictionary<string, double> _values = new();
+    private readonly List<SensorThresholdItem> _thresholds = new()
     {
-        void UpdateValue(string topic, double value);
-        IReadOnlyDictionary<string, double> GetAllValues();
+        new SensorThresholdItem { Name = "Температура води (Temp)", Topic = "boiler/1/sensors/water/temperature", Max = 90 },
+        new SensorThresholdItem { Name = "Тиск у котлі (Pressure)", Topic = "boiler/1/sensors/drum/pressure", Max = 10 },
+        new SensorThresholdItem { Name = "Рівень води (Water Level)", Topic = "boiler/1/sensors/drum/level", Max = 85 }
+    };
+
+    public void UpdateValue(string topic, double value)
+    {
+        _values[topic] = value;
     }
 
-    public class SensorDataService : ISensorDataService
+    public IReadOnlyDictionary<string, double> GetAllValues()
     {
-        // Потокобезопасный словарь: Ключ = топик (или имя датчика), Значение = текущее число
-        private readonly ConcurrentDictionary<string, double> _data = new();
+        return _values;
+    }
 
-        public void UpdateValue(string topic, double value)
-        {
-            _data[topic] = value;
-        }
+    public IReadOnlyList<SensorThresholdItem> GetThresholds()
+    {
+        return _thresholds;
+    }
 
-        public IReadOnlyDictionary<string, double> GetAllValues()
-        {
-            return _data;
-        }
+    public bool UpdateMax(string topic, double max)
+    {
+        var item = _thresholds.FirstOrDefault(s => s.Topic == topic);
+        if (item == null) return false;
+
+        item.Max = max;
+        return true;
     }
 }

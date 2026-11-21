@@ -1,0 +1,36 @@
+﻿@model IReadOnlyList<SensorThresholdItem>
+@{
+    ViewData["Title"] = "Налаштування порогів тривоги";
+}
+
+<div class="container mt-3">
+    <h2>Sensor settings</h2>
+    @if (TempData["Message"] != null)
+    {
+        <p class="text-success fw-bold">@TempData["Message"]</p>
+    }
+
+    <table class="table table-bordered align-middle shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Sensor</th>
+                <th>Alarm above</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.Name <br /><small class="text-muted font-monospace">@s.Topic</small></td>
+                    <td>
+                        <form method="post" asp-action="UpdateMax" class="d-flex gap-2">
+                            <input type="hidden" name="topic" value="@s.Topic" />
+                            <input type="number" step="0.1" name="max" value="@s.Max" class="form-control w-auto" />
+                            <button type="submit" class="btn btn-warning">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

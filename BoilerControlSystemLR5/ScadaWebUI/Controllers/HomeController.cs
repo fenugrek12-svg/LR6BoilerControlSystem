@@ -25,16 +25,17 @@ namespace ScadaWebUI.Controllers
             _db = db;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => View();
 
         [HttpGet]
-        public IActionResult GetSensorData()
+        public IActionResult GetSensorData() => Json(_sensorDataService.GetAllValues());
+
+        [HttpGet]
+        public IActionResult GetThresholds()
         {
-            var data = _sensorDataService.GetAllValues();
-            return Json(data);
+            var thresholds = _sensorDataService.GetThresholds()
+                .ToDictionary(t => t.Topic, t => t.Max);
+            return Json(thresholds);
         }
 
         [HttpPost]
@@ -76,10 +77,7 @@ namespace ScadaWebUI.Controllers
         }
 
         [AllowAnonymous]
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        public IActionResult Privacy() => View();
 
         [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
